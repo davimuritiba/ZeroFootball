@@ -1,0 +1,91 @@
+[gd_scene load_steps=11 format=3 uid="uid://egoal00001"]
+
+[ext_resource type="Script" path="res://scripts/goal.gd" id="1_script"]
+[ext_resource type="Shader" path="res://shaders/net.gdshader" id="2_net"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_post"]
+albedo_color = Color(0.96, 0.96, 0.97, 1)
+metallic = 0.2
+roughness = 0.35
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_net"]
+shader = ExtResource("2_net")
+shader_parameter/net_color = Color(0.92, 0.93, 0.95, 1)
+shader_parameter/grid_density = 46.0
+shader_parameter/thread = 0.055
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_goal"]
+size = Vector3(1.2, 2.5, 6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_post"]
+size = Vector3(0.12, 2.5, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_crossbar"]
+size = Vector3(0.12, 0.12, 6.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_net_back"]
+size = Vector3(0.04, 2.5, 6.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_net_top"]
+size = Vector3(1.4, 0.04, 6.0)
+
+[sub_resource type="BoxMesh" id="BoxMesh_net_side"]
+size = Vector3(1.4, 2.5, 0.04)
+
+[node name="Goal" type="Area3D"]
+monitoring = true
+monitorable = false
+script = ExtResource("1_script")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 1.25, 0)
+shape = SubResource("BoxShape3D_goal")
+
+[node name="Posts" type="Node3D" parent="."]
+
+[node name="PostLeft" type="MeshInstance3D" parent="Posts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -3)
+mesh = SubResource("BoxMesh_post")
+surface_material_override/0 = SubResource("StandardMaterial3D_post")
+
+[node name="PostRight" type="MeshInstance3D" parent="Posts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 3)
+mesh = SubResource("BoxMesh_post")
+surface_material_override/0 = SubResource("StandardMaterial3D_post")
+
+[node name="Crossbar" type="MeshInstance3D" parent="Posts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+mesh = SubResource("BoxMesh_crossbar")
+surface_material_override/0 = SubResource("StandardMaterial3D_post")
+
+[node name="BackPostLeft" type="MeshInstance3D" parent="Posts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 1.25, -3)
+mesh = SubResource("BoxMesh_post")
+surface_material_override/0 = SubResource("StandardMaterial3D_post")
+
+[node name="BackPostRight" type="MeshInstance3D" parent="Posts"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 1.25, 3)
+mesh = SubResource("BoxMesh_post")
+surface_material_override/0 = SubResource("StandardMaterial3D_post")
+
+[node name="Net" type="Node3D" parent="."]
+
+[node name="NetBack" type="MeshInstance3D" parent="Net"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 1.25, 0)
+mesh = SubResource("BoxMesh_net_back")
+surface_material_override/0 = SubResource("ShaderMaterial_net")
+
+[node name="NetTop" type="MeshInstance3D" parent="Net"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 2.5, 0)
+mesh = SubResource("BoxMesh_net_top")
+surface_material_override/0 = SubResource("ShaderMaterial_net")
+
+[node name="NetSideLeft" type="MeshInstance3D" parent="Net"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 1.25, -3)
+mesh = SubResource("BoxMesh_net_side")
+surface_material_override/0 = SubResource("ShaderMaterial_net")
+
+[node name="NetSideRight" type="MeshInstance3D" parent="Net"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 1.25, 3)
+mesh = SubResource("BoxMesh_net_side")
+surface_material_override/0 = SubResource("ShaderMaterial_net")
