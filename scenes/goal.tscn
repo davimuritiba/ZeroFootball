@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://egoal00001"]
+[gd_scene load_steps=15 format=3 uid="uid://egoal00001"]
 
 [ext_resource type="Script" path="res://scripts/goal.gd" id="1_script"]
 [ext_resource type="Shader" path="res://shaders/net.gdshader" id="2_net"]
@@ -31,6 +31,19 @@ size = Vector3(1.4, 0.04, 6.0)
 
 [sub_resource type="BoxMesh" id="BoxMesh_net_side"]
 size = Vector3(1.4, 2.5, 0.04)
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_goal"]
+friction = 0.85
+bounce = 0.2
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_back_net"]
+size = Vector3(0.12, 2.4, 6.0)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_post"]
+size = Vector3(0.14, 2.5, 0.14)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_crossbar"]
+size = Vector3(0.14, 0.14, 6.12)
 
 [node name="Goal" type="Area3D"]
 monitoring = true
@@ -89,3 +102,33 @@ surface_material_override/0 = SubResource("ShaderMaterial_net")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6, 1.25, 3)
 mesh = SubResource("BoxMesh_net_side")
 surface_material_override/0 = SubResource("ShaderMaterial_net")
+
+[node name="Colliders" type="Node3D" parent="."]
+
+[node name="PostLeft" type="StaticBody3D" parent="Colliders"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, -3)
+physics_material_override = SubResource("PhysicsMaterial_goal")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Colliders/PostLeft"]
+shape = SubResource("BoxShape3D_post")
+
+[node name="PostRight" type="StaticBody3D" parent="Colliders"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.25, 3)
+physics_material_override = SubResource("PhysicsMaterial_goal")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Colliders/PostRight"]
+shape = SubResource("BoxShape3D_post")
+
+[node name="CrossbarCollider" type="StaticBody3D" parent="Colliders"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0)
+physics_material_override = SubResource("PhysicsMaterial_goal")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Colliders/CrossbarCollider"]
+shape = SubResource("BoxShape3D_crossbar")
+
+[node name="BackNet" type="StaticBody3D" parent="Colliders"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.2, 1.25, 0)
+physics_material_override = SubResource("PhysicsMaterial_goal")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Colliders/BackNet"]
+shape = SubResource("BoxShape3D_back_net")

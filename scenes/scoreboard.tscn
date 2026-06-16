@@ -1,0 +1,241 @@
+[gd_scene load_steps=7 format=3 uid="uid://cscorebrd01"]
+
+[ext_resource type="Script" path="res://scripts/scoreboard.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_board"]
+bg_color = Color(0.04, 0.06, 0.1, 0.92)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.82, 0.72, 0.28, 0.85)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 8
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_home_accent"]
+bg_color = Color(0.82, 0.12, 0.1, 1)
+corner_radius_top_left = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_away_accent"]
+bg_color = Color(0.1, 0.28, 0.82, 1)
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_divider"]
+bg_color = Color(0.82, 0.72, 0.28, 0.35)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_overlay"]
+bg_color = Color(0.02, 0.04, 0.08, 0.72)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_goal_card"]
+bg_color = Color(0.05, 0.07, 0.12, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.9, 0.78, 0.22, 0.95)
+corner_radius_top_left = 14
+corner_radius_top_right = 14
+corner_radius_bottom_right = 14
+corner_radius_bottom_left = 14
+shadow_color = Color(0, 0, 0, 0.55)
+shadow_size = 16
+shadow_offset = Vector2(0, 6)
+
+[node name="Scoreboard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="BoardAnchor" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -196.0
+offset_top = 14.0
+offset_right = 196.0
+offset_bottom = 86.0
+grow_horizontal = 2
+
+[node name="BoardPanel" type="PanelContainer" parent="BoardAnchor"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(196, 36)
+theme_override_styles/panel = SubResource("StyleBoxFlat_board")
+
+[node name="Margin" type="MarginContainer" parent="BoardAnchor/BoardPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 8
+
+[node name="HBox" type="HBoxContainer" parent="BoardAnchor/BoardPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="HomeAccent" type="Panel" parent="BoardAnchor/BoardPanel/Margin/HBox"]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_home_accent")
+
+[node name="HomeBlock" type="VBoxContainer" parent="BoardAnchor/BoardPanel/Margin/HBox"]
+custom_minimum_size = Vector2(118, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="HomeName" type="Label" parent="BoardAnchor/BoardPanel/Margin/HBox/HomeBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.82, 1)
+theme_override_font_sizes/font_size = 11
+text = "CASA"
+horizontal_alignment = 1
+
+[node name="HomeScore" type="Label" parent="BoardAnchor/BoardPanel/Margin/HBox/HomeBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 38
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Center" type="VBoxContainer" parent="BoardAnchor/BoardPanel/Margin/HBox"]
+custom_minimum_size = Vector2(52, 0)
+layout_mode = 2
+alignment = 1
+
+[node name="DividerTop" type="Panel" parent="BoardAnchor/BoardPanel/Margin/HBox/Center"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_divider")
+
+[node name="Versus" type="Label" parent="BoardAnchor/BoardPanel/Margin/HBox/Center"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.72, 0.28, 0.9)
+theme_override_font_sizes/font_size = 13
+text = "×"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DividerBottom" type="Panel" parent="BoardAnchor/BoardPanel/Margin/HBox/Center"]
+custom_minimum_size = Vector2(0, 1)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_divider")
+
+[node name="AwayBlock" type="VBoxContainer" parent="BoardAnchor/BoardPanel/Margin/HBox"]
+custom_minimum_size = Vector2(118, 0)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="AwayName" type="Label" parent="BoardAnchor/BoardPanel/Margin/HBox/AwayBlock"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.82, 1)
+theme_override_font_sizes/font_size = 11
+text = "VISITANTE"
+horizontal_alignment = 1
+
+[node name="AwayScore" type="Label" parent="BoardAnchor/BoardPanel/Margin/HBox/AwayBlock"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.98, 1, 1)
+theme_override_font_sizes/font_size = 38
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AwayAccent" type="Panel" parent="BoardAnchor/BoardPanel/Margin/HBox"]
+custom_minimum_size = Vector2(5, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_away_accent")
+
+[node name="Title" type="Label" parent="BoardAnchor"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -80.0
+offset_top = -10.0
+offset_right = 80.0
+offset_bottom = 8.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.82, 0.72, 0.28, 0.75)
+theme_override_font_sizes/font_size = 10
+text = "ZERO FOOTBALL"
+horizontal_alignment = 1
+
+[node name="GoalOverlay" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Dim" type="Panel" parent="GoalOverlay"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_overlay")
+
+[node name="GoalCard" type="PanelContainer" parent="GoalOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -72.0
+offset_right = 150.0
+offset_bottom = 72.0
+grow_horizontal = 2
+grow_vertical = 2
+pivot_offset = Vector2(150, 72)
+theme_override_styles/panel = SubResource("StyleBoxFlat_goal_card")
+
+[node name="VBox" type="VBoxContainer" parent="GoalOverlay/GoalCard"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="GoalTitle" type="Label" parent="GoalOverlay/GoalCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.88, 0.35, 1)
+theme_override_font_sizes/font_size = 56
+text = "GOL!"
+horizontal_alignment = 1
+
+[node name="GoalTeam" type="Label" parent="GoalOverlay/GoalCard/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.28, 0.22, 1)
+theme_override_font_sizes/font_size = 18
+text = "CASA"
+horizontal_alignment = 1

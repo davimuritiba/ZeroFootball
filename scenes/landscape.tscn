@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://blandscape1"]
+
+[ext_resource type="Script" path="res://scripts/landscape.gd" id="1_script"]
+
+[node name="Landscape" type="Node3D"]
+script = ExtResource("1_script")

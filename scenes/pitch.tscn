@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://bpitch001"]
+[gd_scene load_steps=21 format=3 uid="uid://bpitch001"]
 
 [ext_resource type="Shader" path="res://shaders/grass.gdshader" id="1_grass_shader"]
 
@@ -53,6 +53,19 @@ size = Vector3(50, 2, 0.4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_end_segment"]
 size = Vector3(0.4, 2, 12)
+
+[sub_resource type="PlaneMesh" id="PlaneMesh_behind_goal"]
+size = Vector2(8.5, 3.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_behind_goal_floor"]
+size = Vector3(3.5, 0.1, 8.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_goal_back_wall"]
+size = Vector3(0.4, 2.5, 8.5)
+
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_wall"]
+friction = 0.85
+bounce = 0.25
 
 [node name="Pitch" type="Node3D"]
 
@@ -195,3 +208,41 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 1, 9)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Walls/GoalLineEastRight"]
 shape = SubResource("BoxShape3D_end_segment")
+
+[node name="BehindGoals" type="Node3D" parent="."]
+
+[node name="BehindGoalWest" type="StaticBody3D" parent="BehindGoals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.75, 0, 0)
+physics_material_override = SubResource("PhysicsMaterial_grass")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BehindGoals/BehindGoalWest"]
+mesh = SubResource("PlaneMesh_behind_goal")
+surface_material_override/0 = SubResource("ShaderMaterial_grass")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BehindGoals/BehindGoalWest"]
+shape = SubResource("BoxShape3D_behind_goal_floor")
+
+[node name="BackWallWest" type="StaticBody3D" parent="BehindGoals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 1.25, 0)
+physics_material_override = SubResource("PhysicsMaterial_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BehindGoals/BackWallWest"]
+shape = SubResource("BoxShape3D_goal_back_wall")
+
+[node name="BehindGoalEast" type="StaticBody3D" parent="BehindGoals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26.75, 0, 0)
+physics_material_override = SubResource("PhysicsMaterial_grass")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="BehindGoals/BehindGoalEast"]
+mesh = SubResource("PlaneMesh_behind_goal")
+surface_material_override/0 = SubResource("ShaderMaterial_grass")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BehindGoals/BehindGoalEast"]
+shape = SubResource("BoxShape3D_behind_goal_floor")
+
+[node name="BackWallEast" type="StaticBody3D" parent="BehindGoals"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.5, 1.25, 0)
+physics_material_override = SubResource("PhysicsMaterial_wall")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="BehindGoals/BackWallEast"]
+shape = SubResource("BoxShape3D_goal_back_wall")

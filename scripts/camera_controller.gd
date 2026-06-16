@@ -3,20 +3,20 @@ extends Camera3D
 ## Broadcast-style side camera, low and close to the pitch so that
 ## only the far (front) stand is visible behind the action.
 
-@export var cam_height   : float = 24.0   # height above ground (steep enough to hide sky)
-@export var cam_distance  : float = 31.0   # distance from field centre (Z)
-@export var cam_side      : float = -1.0   # -1 = north touchline
-@export var follow_speed  : float = 5.0    # lateral follow lerp speed
-@export var x_damp        : float = 0.7    # how much of ball X is tracked (0–1)
-@export var x_clamp       : float = 14.0   # max lateral offset from centre
-@export var z_lead        : float = 0.15   # subtle dolly toward the ball depth
-@export var look_height   : float = 0.5    # aim near the ground for a downward tilt
+@export var cam_height   : float = 24.0
+@export var cam_distance  : float = 28.0
+@export var cam_side      : float = -1.0
+@export var follow_speed  : float = 5.0
+@export var x_damp        : float = 0.65
+@export var x_clamp       : float = 13.0
+@export var z_lead        : float = 0.12
+@export var look_height   : float = 0.8
 
 var _ball: Node3D = null
 
 
 func _ready() -> void:
-	fov = 55.0
+	fov = 44.0
 	call_deferred("_find_ball")
 	_update(0.0, 0.0)
 
@@ -41,4 +41,4 @@ func _update(cam_x: float, ball_z: float) -> void:
 	var z := cam_side * cam_distance - cam_side * ball_z * z_lead
 	global_position = Vector3(cam_x, cam_height, z)
 	# Aim down across the pitch; low target keeps the sky out of frame
-	look_at(Vector3(cam_x * 0.6, look_height, -cam_side * 8.0))
+	look_at(Vector3(cam_x * 0.55, look_height, -cam_side * 6.0))

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://fmain00001"]
+[gd_scene load_steps=13 format=3 uid="uid://fmain00001"]
 
 [ext_resource type="Script" path="res://scripts/game_manager.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://bpitch001" path="res://scenes/pitch.tscn" id="2_pitch"]
@@ -8,15 +8,19 @@
 [ext_resource type="PackedScene" uid="uid://hstadium01" path="res://scenes/stadium.tscn" id="6_stadium"]
 [ext_resource type="Script" path="res://scripts/camera_controller.gd" id="7_camera"]
 [ext_resource type="PackedScene" uid="uid://caiplayer01" path="res://scenes/ai_player.tscn" id="8_ai"]
+[ext_resource type="PackedScene" uid="uid://blandscape1" path="res://scenes/landscape.tscn" id="9_landscape"]
+[ext_resource type="PackedScene" uid="uid://cscorebrd01" path="res://scenes/scoreboard.tscn" id="10_scoreboard"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
-sky_top_color = Color(0.14, 0.34, 0.76, 1)
-sky_horizon_color = Color(0.62, 0.77, 0.92, 1)
-sky_curve = 0.09
-ground_bottom_color = Color(0.07, 0.08, 0.10, 1)
-ground_horizon_color = Color(0.34, 0.39, 0.43, 1)
-sun_angle_max = 28.0
-sun_curve = 0.12
+sky_top_color = Color(0.22, 0.48, 0.88, 1)
+sky_horizon_color = Color(0.72, 0.84, 0.96, 1)
+sky_curve = 0.12
+ground_bottom_color = Color(0.14, 0.32, 0.14, 1)
+ground_horizon_color = Color(0.38, 0.55, 0.32, 1)
+sun_angle_max = 35.0
+sun_curve = 0.08
+energy_multiplier = 1.15
+use_debanding = true
 
 [sub_resource type="Sky" id="Sky_1"]
 sky_material = SubResource("ProceduralSkyMaterial_1")
@@ -25,19 +29,21 @@ sky_material = SubResource("ProceduralSkyMaterial_1")
 background_mode = 2
 sky = SubResource("Sky_1")
 ambient_light_source = 3
-ambient_light_energy = 0.6
+ambient_light_energy = 0.5
 reflected_light_source = 2
 tonemap_mode = 3
-tonemap_exposure = 1.0
-tonemap_white = 6.0
+tonemap_exposure = 1.08
+tonemap_white = 5.5
 ssao_enabled = true
-ssao_radius = 1.2
-ssao_intensity = 2.5
-ssao_power = 1.5
-ssao_detail = 0.6
+ssao_radius = 1.4
+ssao_intensity = 3.0
+ssao_power = 1.6
+ssao_detail = 0.65
+ssao_horizon = 0.08
 ssil_enabled = true
-ssil_radius = 4.0
-ssil_intensity = 1.0
+ssil_radius = 5.0
+ssil_intensity = 1.4
+ssil_sharpness = 0.9
 sdfgi_enabled = true
 sdfgi_use_occlusion = true
 sdfgi_cascades = 4
@@ -50,14 +56,16 @@ glow_bloom = 0.12
 glow_blend_mode = 1
 glow_hdr_threshold = 1.1
 fog_enabled = true
-fog_light_color = Color(0.72, 0.8, 0.9, 1)
-fog_density = 0.004
-fog_sky_affect = 0.0
-fog_aerial_perspective = 0.4
+fog_light_color = Color(0.78, 0.86, 0.96, 1)
+fog_density = 0.0028
+fog_sky_affect = 0.35
+fog_aerial_perspective = 0.55
+fog_height = 0.0
+fog_height_density = 0.08
 adjustment_enabled = true
-adjustment_brightness = 1.02
-adjustment_contrast = 1.08
-adjustment_saturation = 1.12
+adjustment_brightness = 1.03
+adjustment_contrast = 1.1
+adjustment_saturation = 1.15
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_script")
@@ -69,28 +77,35 @@ environment = SubResource("Environment_main")
 
 [node name="Sun" type="DirectionalLight3D" parent="World"]
 transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707107, 0.707107, -0.5, -0.612372, 0.612372, 0, 20, 0)
-light_energy = 1.1
-light_angular_distance = 1.0
+light_energy = 1.25
+light_color = Color(1, 0.97, 0.92, 1)
+light_angular_distance = 0.8
 shadow_enabled = true
-shadow_bias = 0.04
-shadow_blur = 1.5
-directional_shadow_mode = 2
-directional_shadow_split_1 = 0.08
-directional_shadow_split_2 = 0.2
-directional_shadow_split_3 = 0.5
-directional_shadow_max_distance = 120.0
+shadow_bias = 0.02
+shadow_normal_bias = 1.2
+shadow_blur = 2.5
+directional_shadow_mode = 1
+directional_shadow_blend_splits = true
+directional_shadow_split_1 = 0.06
+directional_shadow_split_2 = 0.14
+directional_shadow_split_3 = 0.38
+directional_shadow_fade_start = 0.85
+directional_shadow_max_distance = 100.0
 
 [node name="Fill" type="DirectionalLight3D" parent="World"]
 transform = Transform3D(-0.866025, -0.25, -0.433013, 0, 0.866025, -0.5, 0.5, -0.433013, -0.75, 0, 20, 0)
-light_color = Color(0.78, 0.84, 1.0, 1)
-light_energy = 0.25
+light_color = Color(0.72, 0.78, 0.95, 1)
+light_energy = 0.12
+
+[node name="Landscape" parent="World" instance=ExtResource("9_landscape")]
 
 [node name="Pitch" parent="World" instance=ExtResource("2_pitch")]
 
 [node name="Stadium" parent="World" instance=ExtResource("6_stadium")]
 
 [node name="Player" parent="World" instance=ExtResource("3_player")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 5)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0, 0)
+home_pos = Vector3(-6, 0, 0)
 
 [node name="Ball" parent="World" instance=ExtResource("4_ball")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
@@ -112,18 +127,26 @@ jersey_color = Color(0.8, 0.08, 0.12, 1)
 shorts_color = Color(0.12, 0.12, 0.22, 1)
 
 [node name="HomeDefL" parent="World" instance=ExtResource("8_ai")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -4)
 team = "home"
 role = "defender"
-home_pos = Vector3(-12, 0, -4)
+home_pos = Vector3(-14, 0, -4)
 jersey_color = Color(0.8, 0.08, 0.12, 1)
 shorts_color = Color(0.12, 0.12, 0.22, 1)
 
 [node name="HomeDefR" parent="World" instance=ExtResource("8_ai")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, 4)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 4)
 team = "home"
 role = "defender"
-home_pos = Vector3(-12, 0, 4)
+home_pos = Vector3(-14, 0, 4)
+jersey_color = Color(0.8, 0.08, 0.12, 1)
+shorts_color = Color(0.12, 0.12, 0.22, 1)
+
+[node name="HomeFwd" parent="World" instance=ExtResource("8_ai")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
+team = "home"
+role = "forward"
+home_pos = Vector3(-3, 0, 0)
 jersey_color = Color(0.8, 0.08, 0.12, 1)
 shorts_color = Color(0.12, 0.12, 0.22, 1)
 
@@ -160,10 +183,10 @@ jersey_color = Color(0.08, 0.18, 0.72, 1)
 shorts_color = Color(0.05, 0.05, 0.15, 1)
 
 [node name="AwayFwd" parent="World" instance=ExtResource("8_ai")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 0)
 team = "away"
 role = "forward"
-home_pos = Vector3(-3, 0, 0)
+home_pos = Vector3(3, 0, 0)
 jersey_color = Color(0.08, 0.18, 0.72, 1)
 shorts_color = Color(0.05, 0.05, 0.15, 1)
 
@@ -174,31 +197,18 @@ script = ExtResource("7_camera")
 
 [node name="UI" type="CanvasLayer" parent="."]
 
-[node name="ScoreLabel" type="Label" parent="UI"]
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 0.0
-anchor_bottom = 0.0
-offset_left = -120.0
-offset_right = 120.0
-offset_top = 16.0
-offset_bottom = 56.0
-text = "0  —  0"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 32
+[node name="Scoreboard" parent="UI" instance=ExtResource("10_scoreboard")]
 
-[node name="GoalLabel" type="Label" parent="UI"]
-visible = false
-anchor_left = 0.5
-anchor_right = 0.5
-anchor_top = 0.5
-anchor_bottom = 0.5
-offset_left = -120.0
-offset_right = 120.0
+[node name="HintLabel" type="Label" parent="UI"]
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = -220.0
+offset_right = -12.0
 offset_top = -36.0
-offset_bottom = 36.0
-text = "GOL!"
-horizontal_alignment = 1
-vertical_alignment = 1
-theme_override_font_sizes/font_size = 64
+offset_bottom = -8.0
+text = "Tab — trocar | Q — roubar bola"
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(1, 1, 1, 0.65)

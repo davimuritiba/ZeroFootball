@@ -4,14 +4,15 @@ var score_home: int = 0
 var score_away: int = 0
 var _goal_cooldown: bool = false
 
-@onready var score_label: Label = $UI/ScoreLabel
-@onready var goal_label: Label = $UI/GoalLabel
+@onready var _scoreboard = $UI/Scoreboard
 
 var _ball: RigidBody3D = null
-var _player: CharacterBody3D = null
+var _controlled: CharacterBody3D = null
+var _last_carrier: Node3D = null
+var _home_players: Array[CharacterBody3D] = []
 
 const BALL_START := Vector3(0.0, 0.3, 0.0)
-const PLAYER_START := Vector3(0.0, 0.0, 5.0)
+const INDICATOR_SCRIPT := preload("res://scripts/control_indicator.gd")
 
 
 func _ready() -> void:
@@ -22,7 +23,112 @@ func _ready() -> void:
 
 func _find_nodes() -> void:
 	_ball = get_tree().get_first_node_in_group("ball")
-	_player = get_tree().get_first_node_in_group("player")
+	_collect_home_players()
+	_setup_indicators()
+	_disable_all_home_control()
+	set_controlled_player(_find_closest_home_player_to_ball())
+
+
+func _disable_all_home_control() -> void:
+	for player in _home_players:
+		if player.has_method("set_human_control"):
+			player.set_human_control(false)
+
+
+func _find_closest_home_player_to_ball() -> CharacterBody3D:
+	if _home_players.is_empty():
+		_collect_home_players()
+	if _home_players.is_empty():
+		return null
+	if not _ball:
+		return _home_players[0]
+
+	var ball_pos := _ball.global_position
+	var closest: CharacterBody3D = _home_players[0]
+	var best_dist := INF
+	for player in _home_players:
+		var dist := player.global_position.distance_squared_to(ball_pos)
+		if dist < best_dist:
+			best_dist = dist
+			closest = player
+	return closest
+
+
+func _collect_home_players() -> void:
+	_home_players.clear()
+	for node in get_tree().get_nodes_in_group("home_controllable"):
+		if node is CharacterBody3D:
+			_home_players.append(node)
+	_home_players.sort_custom(func(a: CharacterBody3D, b: CharacterBody3D) -> bool:
+		return a.name < b.name
+	)
+
+
+func _setup_indicators() -> void:
+	for player in _home_players:
+		if player.get_node_or_null("ControlIndicator"):
+			continue
+		var indicator: Node3D = INDICATOR_SCRIPT.new()
+		indicator.name = "ControlIndicator"
+		player.add_child(indicator)
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("switch_player"):
+		cycle_controlled_player()
+
+
+func cycle_controlled_player() -> void:
+	if _home_players.is_empty():
+		_collect_home_players()
+	if _home_players.is_empty():
+		return
+	var idx := _home_players.find(_controlled)
+	if idx < 0:
+		idx = 0
+	else:
+		idx = (idx + 1) % _home_players.size()
+	set_controlled_player(_home_players[idx])
+
+
+func _physics_process(_delta: float) -> void:
+	if not _ball:
+		return
+	var carrier: Node3D = _ball.get_carrier()
+	if carrier == _last_carrier:
+		return
+	_last_carrier = carrier
+	if carrier and _is_home_controllable(carrier):
+		set_controlled_player(carrier as CharacterBody3D)
+
+
+func set_controlled_player(player: CharacterBody3D) -> void:
+	if player == null:
+		return
+	if player == _controlled:
+		_refresh_indicators()
+		return
+	if _controlled and _controlled.has_method("set_human_control"):
+		_controlled.set_human_control(false)
+	_controlled = player
+	if _controlled.has_method("set_human_control"):
+		_controlled.set_human_control(true)
+	_refresh_indicators()
+
+
+func _refresh_indicators() -> void:
+	for player in _home_players:
+		var indicator := player.get_node_or_null("ControlIndicator")
+		if indicator and indicator.has_method("set_active"):
+			indicator.set_active(player == _controlled)
+
+
+func get_controlled_player() -> CharacterBody3D:
+	return _controlled
+
+
+func _is_home_controllable(node: Node) -> bool:
+	return node.is_in_group("home_controllable")
 
 
 func register_goal(team: String) -> void:
@@ -36,17 +142,18 @@ func register_goal(team: String) -> void:
 		score_away += 1
 
 	_update_score_ui()
-	_show_goal_label()
+	_show_goal_label(team)
 	get_tree().create_timer(2.0).timeout.connect(_reset_positions)
 
 
 func _update_score_ui() -> void:
-	score_label.text = "%d  —  %d" % [score_home, score_away]
+	if _scoreboard:
+		_scoreboard.set_scores(score_home, score_away)
 
 
-func _show_goal_label() -> void:
-	goal_label.visible = true
-	get_tree().create_timer(1.8).timeout.connect(func(): goal_label.visible = false)
+func _show_goal_label(team: String) -> void:
+	if _scoreboard:
+		_scoreboard.play_goal(team)
 
 
 func _reset_positions() -> void:
@@ -56,15 +163,18 @@ func _reset_positions() -> void:
 		_ball.linear_velocity = Vector3.ZERO
 		_ball.angular_velocity = Vector3.ZERO
 		_ball.global_position = BALL_START
+	_last_carrier = null
 
-	if _player:
-		_player.velocity = Vector3.ZERO
-		_player.global_position = PLAYER_START
+	_disable_all_home_control()
+	for player in _home_players:
+		if player.has_method("reset_to_home"):
+			player.reset_to_home()
 
 	for ai in get_tree().get_nodes_in_group("ai_player"):
-		if ai.has_method("reset_to_home"):
+		if ai.get("team") == "away" and ai.has_method("reset_to_home"):
 			ai.reset_to_home()
 
+	set_controlled_player(_find_closest_home_player_to_ball())
 	_goal_cooldown = false
 
 
@@ -75,6 +185,8 @@ func _setup_input() -> void:
 	_add_key_action("move_right", [KEY_D, KEY_RIGHT])
 	_add_key_action("kick",       [KEY_SPACE])
 	_add_key_action("kick_strong",[KEY_E])
+	_add_key_action("tackle",     [KEY_Q])
+	_add_key_action("switch_player", [KEY_TAB])
 
 
 func _add_key_action(action: String, keys: Array) -> void:

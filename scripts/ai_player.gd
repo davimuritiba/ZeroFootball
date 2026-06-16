@@ -1,13 +1,19 @@
 extends CharacterBody3D
 
 const SPEED            := 5.5
+const SPEED_CONTROLLED := 7.0
 const GRAVITY          := 20.0
 const TURN_SPEED       := 9.0
+const TURN_SPEED_HUMAN := 12.0
 const CAPTURE_RADIUS   := 1.1
 const DRIBBLE_DISTANCE := 0.8
 const BALL_HEIGHT      := 0.3
 const RECAPTURE_DELAY  := 0.6
+const STEAL_RANGE      := 1.5
+const STEAL_VICTIM_CD  := 0.8
 const KICK_FORCE       := 14.0
+const KICK_FORCE_HUMAN := 16.0
+const KICK_STRONG_HUMAN := 26.0
 const SHOOT_RANGE      := 9.0
 const ARRIVE_DIST      := 1.2
 
@@ -21,15 +27,29 @@ var _ball            : RigidBody3D = null
 var _facing_angle    : float = 0.0
 var _recapture_timer : float = 0.0
 var _attack_x        : float = -1.0
+var _human_control   : bool = false
 
 @onready var _visual : Node3D = $Visual
 
 
 func _ready() -> void:
 	add_to_group("ai_player")
+	if team == "home":
+		add_to_group("home_controllable")
 	_attack_x = 1.0 if team == "home" else -1.0
 	call_deferred("_init_visual")
 	call_deferred("_find_ball")
+
+
+func set_human_control(enabled: bool) -> void:
+	_human_control = enabled
+	if not enabled:
+		velocity.x = 0.0
+		velocity.z = 0.0
+
+
+func is_human_controlled() -> bool:
+	return _human_control
 
 
 func _init_visual() -> void:
@@ -47,10 +67,51 @@ func _physics_process(delta: float) -> void:
 	if _recapture_timer > 0.0:
 		_recapture_timer -= delta
 
-	var dir := _compute_direction()
-	_apply_movement(dir, delta)
+	if _human_control:
+		_process_human(delta)
+	else:
+		var dir := _compute_direction()
+		_apply_movement(dir, delta)
+
 	_update_possession()
 	_update_carry_and_shoot()
+
+	if _visual and _visual.has_method("update_animation"):
+		var flat_speed := Vector2(velocity.x, velocity.z).length()
+		_visual.set_move_speed(flat_speed)
+		_visual.update_animation(delta)
+
+
+func _process_human(delta: float) -> void:
+	var dir := InputHelper.movement_vector()
+	var speed := SPEED_CONTROLLED
+	var turn := TURN_SPEED_HUMAN
+	if dir.length_squared() > 0.0:
+		_facing_angle = atan2(dir.x, dir.z)
+		if _visual:
+			_visual.rotation.y = lerp_angle(_visual.rotation.y, _facing_angle, turn * delta)
+	velocity.x = dir.x * speed
+	velocity.z = dir.z * speed
+	if not is_on_floor():
+		velocity.y -= GRAVITY * delta
+	move_and_slide()
+
+	if _has_ball():
+		if InputHelper.kick_strong_pressed():
+			_human_release(KICK_STRONG_HUMAN)
+		elif InputHelper.kick_pressed():
+			_human_release(KICK_FORCE_HUMAN)
+	elif InputHelper.tackle_pressed():
+		_try_tackle()
+
+
+func _human_release(force: float) -> void:
+	if not _has_ball():
+		return
+	if _visual and _visual.has_method("play_kick"):
+		_visual.play_kick()
+	_ball.release(_forward() * force)
+	_recapture_timer = RECAPTURE_DELAY
 
 
 # ── Movimento ─────────────────────────────────────────────────────────────────
@@ -115,13 +176,20 @@ func _is_primary_chaser() -> bool:
 			continue
 		if ai.global_position.distance_squared_to(_ball.global_position) < my_d2 - 0.25:
 			return false
+	if team == "home":
+		for ally in get_tree().get_nodes_in_group("home_controllable"):
+			if ally == self:
+				continue
+			if ally.global_position.distance_squared_to(_ball.global_position) < my_d2 - 0.25:
+				return false
 	return true
 
 
 func _is_opponent(node: Node) -> bool:
+	if node.is_in_group("home_controllable"):
+		return team == "away"
 	var node_team = node.get("team")
 	if node_team == null:
-		# Jogador humano não tem @export team: assume que é "home"
 		return team == "away"
 	return node_team != team
 
@@ -144,6 +212,25 @@ func _has_ball() -> bool:
 	return _ball != null and _ball.get_carrier() == self
 
 
+func on_ball_stolen() -> void:
+	_recapture_timer = STEAL_VICTIM_CD
+
+
+func _try_tackle() -> void:
+	if not _ball or _has_ball() or _recapture_timer > 0.0:
+		return
+	if not _ball.is_carried():
+		return
+	var carrier := _ball.get_carrier() as Node
+	if not carrier or not _is_opponent(carrier):
+		return
+	if global_position.distance_to(carrier.global_position) > STEAL_RANGE:
+		return
+	if _ball.steal_by(self):
+		if _visual and _visual.has_method("play_kick"):
+			_visual.play_kick()
+
+
 func _update_possession() -> void:
 	if not _ball or _ball.is_carried():
 		return
@@ -161,17 +248,20 @@ func _update_carry_and_shoot() -> void:
 	if not _has_ball():
 		return
 
-	# Mantém a bola à frente enquanto dribla
 	var fwd_pos := global_position + _forward() * DRIBBLE_DISTANCE
 	fwd_pos.y = BALL_HEIGHT
 	_ball.carry_to(fwd_pos)
 
-	# Chuta quando está perto o suficiente do gol adversário
+	if _human_control:
+		return
+
 	var goal_pos := Vector3(_attack_x * 25.0, 0.5, 0.0)
 	if global_position.distance_to(goal_pos) <= SHOOT_RANGE:
 		# Mira levemente em direção ao centro do gol
 		var aim_z := clampf(-global_position.z * 0.5, -2.5, 2.5)
 		var shoot_dir := (Vector3(_attack_x * 25.0, 0.5, aim_z) - global_position).normalized()
+		if _visual and _visual.has_method("play_kick"):
+			_visual.play_kick()
 		_ball.release(shoot_dir * KICK_FORCE)
 		_recapture_timer = RECAPTURE_DELAY
 
