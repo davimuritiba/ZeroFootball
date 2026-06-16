@@ -31,6 +31,7 @@ script = ExtResource("1_script")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="."]
 mesh = SubResource("SphereMesh_ball")
 surface_material_override/0 = SubResource("ShaderMaterial_ball")
+cast_shadow = 1
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("SphereShape3D_ball")

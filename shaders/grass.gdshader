@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode cull_back;
+render_mode cull_back, diffuse_burley;
 
 uniform vec4 color_light : source_color = vec4(0.24, 0.64, 0.24, 1.0);
 uniform vec4 color_dark  : source_color = vec4(0.13, 0.46, 0.14, 1.0);
@@ -29,25 +29,26 @@ void vertex() {
 }
 
 void fragment() {
-	// Mowing stripes running lengthwise across the field
 	float stripe = mod(floor(UV.y * stripe_count), 2.0);
 	vec3 base = mix(color_dark.rgb, color_light.rgb, stripe);
 
-	// Fine blade-level variation (high frequency noise)
 	float blades = noise(UV * blade_detail);
-	base *= 0.88 + 0.24 * blades;
+	base *= 0.86 + 0.26 * blades;
 
-	// Broad patchy variation (low frequency) for uneven turf
 	float patch = noise(UV * 14.0);
-	base = mix(base, base * 0.82, patch * wear_amount);
+	base = mix(base, base * 0.80, patch * wear_amount);
 
-	// Slightly worn, lighter centre circle area
 	float dist_center = length(world_pos.xz);
 	float worn = smoothstep(6.0, 0.0, dist_center) * wear_amount;
-	base = mix(base, base * 1.12 + vec3(0.04, 0.05, 0.03), worn);
+	base = mix(base, base * 1.10 + vec3(0.04, 0.05, 0.03), worn);
+
+	vec2 blade_uv = UV * blade_detail * 2.4;
+	float nx = noise(blade_uv + vec2(0.13, 0.0)) - noise(blade_uv - vec2(0.13, 0.0));
+	float nz = noise(blade_uv + vec2(0.0, 0.13)) - noise(blade_uv - vec2(0.0, 0.13));
+	vec3 grass_normal = normalize(vec3(nx * 0.55, 1.0, nz * 0.55));
 
 	ALBEDO = base;
-	ROUGHNESS = 0.78 + 0.18 * blades;
-	// Anisotropic-ish sheen: stripes catch light differently
-	SPECULAR = 0.10 + 0.06 * stripe;
+	ROUGHNESS = 0.72 + 0.22 * blades;
+	SPECULAR = 0.14 + 0.10 * stripe;
+	NORMAL = grass_normal;
 }

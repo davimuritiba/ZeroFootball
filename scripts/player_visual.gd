@@ -150,6 +150,9 @@ func _reset_limbs() -> void:
 
 # ── Rig build ─────────────────────────────────────────────────────────────────
 
+const _JERSEY_SHADER := preload("res://shaders/jersey.gdshader")
+const _SKIN_SHADER := preload("res://shaders/skin.gdshader")
+
 func _clear() -> void:
 	for child in get_children():
 		remove_child(child)
@@ -158,9 +161,9 @@ func _clear() -> void:
 
 
 func _build_rig() -> void:
-	var jersey := _mat(jersey_color, 0.78)
-	var shorts := _mat(shorts_color, 0.82)
-	var skin := _skin_mat(skin_color)
+	var jersey := _jersey_mat(jersey_color)
+	var shorts := _jersey_mat(shorts_color)
+	var skin := _skin_shader_mat(skin_color)
 	var sock := _mat(sock_color, 0.8)
 	var shoe := _mat(shoe_color, 0.42)
 	var hair := _mat(hair_color, 0.88)
@@ -231,12 +234,22 @@ func _mat(color: Color, roughness: float) -> StandardMaterial3D:
 	return m
 
 
-func _skin_mat(color: Color) -> StandardMaterial3D:
-	var m := _mat(color, 0.58)
-	m.rim_enabled = true
-	m.rim = 0.1
-	m.rim_tint = 0.55
+func _jersey_mat(color: Color) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = _JERSEY_SHADER
+	m.set_shader_parameter("base_color", color)
 	return m
+
+
+func _skin_shader_mat(color: Color) -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = _SKIN_SHADER
+	m.set_shader_parameter("skin_color", color)
+	return m
+
+
+func _skin_mat(color: Color) -> ShaderMaterial:
+	return _skin_shader_mat(color)
 
 
 func _mesh_sphere(pos: Vector3, radius: float, mat: Material, parent: Node,
@@ -251,6 +264,7 @@ func _mesh_sphere(pos: Vector3, radius: float, mat: Material, parent: Node,
 	mi.set_surface_override_material(0, mat)
 	mi.position = pos
 	mi.scale = scale
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	parent.add_child(mi)
 
 
@@ -261,6 +275,7 @@ func _mesh_box(pos: Vector3, size: Vector3, mat: Material, parent: Node) -> void
 	mi.mesh = bm
 	mi.set_surface_override_material(0, mat)
 	mi.position = pos
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	parent.add_child(mi)
 
 
@@ -273,4 +288,5 @@ func _mesh_capsule(pos: Vector3, radius: float, height: float, mat: Material, pa
 	mi.mesh = cm
 	mi.set_surface_override_material(0, mat)
 	mi.position = pos
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	parent.add_child(mi)

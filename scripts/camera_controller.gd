@@ -1,7 +1,6 @@
 extends Camera3D
 
-## Broadcast-style side camera, low and close to the pitch so that
-## only the far (front) stand is visible behind the action.
+## Broadcast-style side camera with subtle depth of field.
 
 @export var cam_height   : float = 24.0
 @export var cam_distance  : float = 28.0
@@ -17,8 +16,18 @@ var _ball: Node3D = null
 
 func _ready() -> void:
 	fov = 44.0
+	_setup_camera_attributes()
 	call_deferred("_find_ball")
 	_update(0.0, 0.0)
+
+
+func _setup_camera_attributes() -> void:
+	var attrs := CameraAttributesPractical.new()
+	attrs.dof_blur_far_enabled = true
+	attrs.dof_blur_far_distance = 65.0
+	attrs.dof_blur_far_transition = 28.0
+	attrs.dof_blur_amount = 0.14
+	attributes = attrs
 
 
 func _find_ball() -> void:

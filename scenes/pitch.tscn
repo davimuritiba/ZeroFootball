@@ -1,6 +1,7 @@
-[gd_scene load_steps=21 format=3 uid="uid://bpitch001"]
+[gd_scene load_steps=22 format=3 uid="uid://bpitch001"]
 
 [ext_resource type="Shader" path="res://shaders/grass.gdshader" id="1_grass_shader"]
+[ext_resource type="Shader" path="res://shaders/line_paint.gdshader" id="2_line_shader"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_grass"]
 shader = ExtResource("1_grass_shader")
@@ -8,9 +9,9 @@ shader_parameter/color_light = Color(0.22, 0.62, 0.22, 1.0)
 shader_parameter/color_dark = Color(0.14, 0.49, 0.14, 1.0)
 shader_parameter/stripe_count = 6.0
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_line"]
-albedo_color = Color(0.95, 0.95, 0.95, 1)
-roughness = 0.8
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_line"]
+shader = ExtResource("2_line_shader")
+shader_parameter/paint_color = Color(0.95, 0.95, 0.95, 1.0)
 
 [sub_resource type="PhysicsMaterial" id="PhysicsMaterial_grass"]
 friction = 0.9
@@ -18,6 +19,8 @@ bounce = 0.15
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_pitch"]
 size = Vector2(50, 30)
+subdivide_width = 24
+subdivide_depth = 14
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(50, 0.1, 30)
@@ -75,6 +78,8 @@ physics_material_override = SubResource("PhysicsMaterial_grass")
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Field"]
 mesh = SubResource("PlaneMesh_pitch")
 surface_material_override/0 = SubResource("ShaderMaterial_grass")
+gi_mode = 1
+cast_shadow = 1
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Field"]
 shape = SubResource("BoxShape3D_floor")
@@ -84,92 +89,92 @@ shape = SubResource("BoxShape3D_floor")
 [node name="BoundaryNorth" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, -14.94)
 mesh = SubResource("BoxMesh_boundary_ns")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="BoundarySouth" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 14.94)
 mesh = SubResource("BoxMesh_boundary_ns")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="BoundaryWest" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.94, 0.02, 0)
 mesh = SubResource("BoxMesh_boundary_ew")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="BoundaryEast" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24.94, 0.02, 0)
 mesh = SubResource("BoxMesh_boundary_ew")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="CenterLine" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0)
 mesh = SubResource("BoxMesh_center_line")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="CenterSpot" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.021, 0)
 mesh = SubResource("CylinderMesh_center_spot")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="HomePenaltyFront" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 0.02, 0)
 mesh = SubResource("BoxMesh_penalty_front")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="HomePenaltyLeft" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0.02, -7)
 mesh = SubResource("BoxMesh_penalty_side")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="HomePenaltyRight" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21, 0.02, 7)
 mesh = SubResource("BoxMesh_penalty_side")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="HomeGoalAreaFront" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0.02, 0)
 mesh = SubResource("BoxMesh_goal_area_front")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="HomeGoalAreaLeft" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0.02, -4)
 mesh = SubResource("BoxMesh_goal_area_side")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="HomeGoalAreaRight" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.5, 0.02, 4)
 mesh = SubResource("BoxMesh_goal_area_side")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="AwayPenaltyFront" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 0.02, 0)
 mesh = SubResource("BoxMesh_penalty_front")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="AwayPenaltyLeft" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0.02, -7)
 mesh = SubResource("BoxMesh_penalty_side")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="AwayPenaltyRight" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21, 0.02, 7)
 mesh = SubResource("BoxMesh_penalty_side")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="AwayGoalAreaFront" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0.02, 0)
 mesh = SubResource("BoxMesh_goal_area_front")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="AwayGoalAreaLeft" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 0.02, -4)
 mesh = SubResource("BoxMesh_goal_area_side")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="AwayGoalAreaRight" type="MeshInstance3D" parent="Markings"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.5, 0.02, 4)
 mesh = SubResource("BoxMesh_goal_area_side")
-surface_material_override/0 = SubResource("StandardMaterial3D_line")
+surface_material_override/0 = SubResource("ShaderMaterial_line")
 
 [node name="Walls" type="Node3D" parent="."]
 
