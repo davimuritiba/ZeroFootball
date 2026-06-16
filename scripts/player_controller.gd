@@ -97,11 +97,18 @@ func _process_teammate_ai(delta: float) -> void:
 	if not _ball:
 		return
 
-	var target := _ball.global_position
+	var target: Vector3
 	if _ball.is_carried():
 		var carrier: Node = _ball.get_carrier()
 		if carrier and carrier.get("team") == team:
-			return
+			# Aliado com bola: avança ao ataque (home team ataca para +X)
+			var ball_pos := _ball.global_position
+			var ball_bonus := clampf(ball_pos.x * 0.3, 0.0, 6.0)
+			var target_x := clampf(home_pos.x + 12.0 + ball_bonus, -23.0, 23.0)
+			target = Vector3(target_x, 0.0, home_pos.z)
+		else:
+			target = _ball.global_position
+	else:
 		target = _ball.global_position
 
 	var to := target - global_position

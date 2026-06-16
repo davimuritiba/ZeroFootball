@@ -10,6 +10,8 @@ var _ball: RigidBody3D = null
 var _controlled: CharacterBody3D = null
 var _last_carrier: Node3D = null
 var _home_players: Array[CharacterBody3D] = []
+var _pass_switch_timer: float = 0.0
+var _pass_passer: CharacterBody3D = null
 
 const BALL_START := Vector3(0.0, 0.3, 0.0)
 const INDICATOR_SCRIPT := preload("res://scripts/control_indicator.gd")
@@ -35,7 +37,7 @@ func _disable_all_home_control() -> void:
 			player.set_human_control(false)
 
 
-func _find_closest_home_player_to_ball() -> CharacterBody3D:
+func _find_closest_home_player_to_ball(exclude: CharacterBody3D = null) -> CharacterBody3D:
 	if _home_players.is_empty():
 		_collect_home_players()
 	if _home_players.is_empty():
@@ -44,14 +46,16 @@ func _find_closest_home_player_to_ball() -> CharacterBody3D:
 		return _home_players[0]
 
 	var ball_pos := _ball.global_position
-	var closest: CharacterBody3D = _home_players[0]
+	var closest: CharacterBody3D = null
 	var best_dist := INF
 	for player in _home_players:
+		if player == exclude:
+			continue
 		var dist := player.global_position.distance_squared_to(ball_pos)
 		if dist < best_dist:
 			best_dist = dist
 			closest = player
-	return closest
+	return closest if closest != null else _home_players[0]
 
 
 func _collect_home_players() -> void:
@@ -81,24 +85,43 @@ func _unhandled_input(event: InputEvent) -> void:
 func cycle_controlled_player() -> void:
 	if _home_players.is_empty():
 		_collect_home_players()
-	if _home_players.is_empty():
+	if _home_players.is_empty() or not _ball:
 		return
-	var idx := _home_players.find(_controlled)
-	if idx < 0:
-		idx = 0
+	var sorted := _home_players.duplicate()
+	var ball_pos := _ball.global_position
+	sorted.sort_custom(func(a: CharacterBody3D, b: CharacterBody3D) -> bool:
+		return a.global_position.distance_squared_to(ball_pos) < b.global_position.distance_squared_to(ball_pos)
+	)
+	if sorted[0] == _controlled and sorted.size() > 1:
+		set_controlled_player(sorted[1])
 	else:
-		idx = (idx + 1) % _home_players.size()
-	set_controlled_player(_home_players[idx])
+		set_controlled_player(sorted[0])
 
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	if not _ball:
 		return
+
+	if _pass_switch_timer > 0.0:
+		_pass_switch_timer -= delta
+		if _pass_switch_timer <= 0.0:
+			set_controlled_player(_find_closest_home_player_to_ball(_pass_passer))
+			_pass_passer = null
+
 	var carrier: Node3D = _ball.get_carrier()
 	if carrier == _last_carrier:
 		return
+	var prev_carrier := _last_carrier
 	_last_carrier = carrier
-	if carrier and _is_home_controllable(carrier):
+
+	if carrier == null and prev_carrier == _controlled:
+		# Passe ou chute: agenda troca pro jogador mais perto da bola
+		_pass_passer = _controlled
+		_pass_switch_timer = 0.15
+	elif carrier and _is_home_controllable(carrier):
+		# Companheiro capturou a bola: troca imediata e cancela timer
+		_pass_switch_timer = 0.0
+		_pass_passer = null
 		set_controlled_player(carrier as CharacterBody3D)
 
 
@@ -164,6 +187,8 @@ func _reset_positions() -> void:
 		_ball.angular_velocity = Vector3.ZERO
 		_ball.global_position = BALL_START
 	_last_carrier = null
+	_pass_switch_timer = 0.0
+	_pass_passer = null
 
 	_disable_all_home_control()
 	for player in _home_players:

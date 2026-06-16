@@ -9,7 +9,7 @@ const CAPTURE_RADIUS   := 1.1
 const DRIBBLE_DISTANCE := 0.8
 const BALL_HEIGHT      := 0.3
 const RECAPTURE_DELAY  := 0.6
-const STEAL_RANGE      := 1.5
+const STEAL_RANGE      := 1.0
 const STEAL_VICTIM_CD  := 0.8
 const KICK_FORCE       := 14.0
 const KICK_FORCE_HUMAN := 16.0
@@ -26,6 +26,7 @@ const ARRIVE_DIST      := 1.2
 var _ball            : RigidBody3D = null
 var _facing_angle    : float = 0.0
 var _recapture_timer : float = 0.0
+var _tackle_timer    : float = 0.0
 var _attack_x        : float = -1.0
 var _human_control   : bool = false
 
@@ -66,12 +67,17 @@ func _physics_process(delta: float) -> void:
 		return
 	if _recapture_timer > 0.0:
 		_recapture_timer -= delta
+	if _tackle_timer > 0.0:
+		_tackle_timer -= delta
 
 	if _human_control:
 		_process_human(delta)
 	else:
 		var dir := _compute_direction()
-		_apply_movement(dir, delta)
+		_apply_movement(dir, _get_movement_speed(), delta)
+		if not _has_ball() and _tackle_timer <= 0.0:
+			if _try_tackle():
+				_tackle_timer = 0.5
 
 	_update_possession()
 	_update_carry_and_shoot()
@@ -143,36 +149,74 @@ func _tactical_target() -> Vector3:
 		var gk_x := my_goal_x + _attack_x * 2.5
 		var dist_from_goal := absf(ball_pos.x - my_goal_x)
 		if dist_from_goal < 7.0:
-			return ball_pos  # Bola perto: sai para interceptar
+			return ball_pos
 		var track_z := clampf(ball_pos.z * 0.5, -3.5, 3.5)
 		return Vector3(gk_x, 0.0, track_z)
 
-	# Jogadores de linha: o mais próximo persegue, os outros mantêm posição
-	var should_chase := false
+	# Bola livre: apenas o mais próximo vai buscar
 	if carrier == null:
-		should_chase = _is_primary_chaser()
-	elif _is_opponent(carrier):
-		should_chase = _is_primary_chaser()
+		if _is_primary_chaser():
+			return ball_pos
+		var shift := clampf(ball_pos.x * 0.2, -5.0, 5.0)
+		var adjusted := home_pos + Vector3(shift, 0.0, 0.0)
+		adjusted.x = clampf(adjusted.x, -23.0, 23.0)
+		return adjusted
 
-	if should_chase:
-		return ball_pos
+	# Adversário com a bola: pressão coordenada com múltiplos jogadores
+	if _is_opponent(carrier):
+		var rank := _chase_rank()
+		if rank == 0:
+			# Mais próximo: pressiona o portador diretamente
+			return ball_pos
+		elif rank == 1:
+			# Segundo mais próximo: intercepta o caminho entre portador e nosso gol
+			return _intercept_point(carrier.global_position)
+		else:
+			# Demais: cobertura defensiva entre a bola e o gol
+			return _defensive_cover_position(ball_pos)
 
-	# Desloca a posição tática com base no X da bola
-	var shift := clampf(ball_pos.x * 0.2, -5.0, 5.0)
-	var adjusted := home_pos + Vector3(shift, 0.0, 0.0)
-	adjusted.x = clampf(adjusted.x, -23.0, 23.0)
-	return adjusted
+	# Aliado com a bola: avança ao ataque em conjunto imediatamente
+	var ball_bonus := clampf(ball_pos.x * _attack_x * 0.3, 0.0, 6.0)
+	var target_x := clampf(home_pos.x + _attack_x * (12.0 + ball_bonus), -23.0, 23.0)
+	return Vector3(target_x, 0.0, home_pos.z)
+
+
+# Rank de proximidade à bola entre companheiros de time (sem goleiro)
+func _chase_rank() -> int:
+	var my_d2 := global_position.distance_squared_to(_ball.global_position)
+	var rank := 0
+	for ai in get_tree().get_nodes_in_group("ai_player"):
+		if ai == self or ai.get("team") != team or ai.get("role") == "goalkeeper":
+			continue
+		if ai.global_position.distance_squared_to(_ball.global_position) < my_d2 - 0.25:
+			rank += 1
+	return rank
+
+
+# Ponto de interceptação entre o portador e nosso gol
+func _intercept_point(carrier_pos: Vector3) -> Vector3:
+	var my_goal_x := -_attack_x * 25.0
+	var goal_center := Vector3(my_goal_x, 0.0, 0.0)
+	var pt := carrier_pos.lerp(goal_center, 0.4)
+	pt.y = 0.0
+	return pt
+
+
+# Posição defensiva entre a bola e o gol, espalhada pela zona Z do jogador
+func _defensive_cover_position(ball_pos: Vector3) -> Vector3:
+	var my_goal_x := -_attack_x * 25.0
+	var target_x := lerpf(ball_pos.x, my_goal_x, 0.35)
+	target_x = clampf(target_x, -23.0, 23.0)
+	var cover_z := lerpf(home_pos.z, ball_pos.z * 0.4, 0.4)
+	cover_z = clampf(cover_z, -15.0, 15.0)
+	return Vector3(target_x, 0.0, cover_z)
 
 
 # Retorna true se este jogador é o mais próximo da bola no mesmo time
 func _is_primary_chaser() -> bool:
 	var my_d2 := global_position.distance_squared_to(_ball.global_position)
 	for ai in get_tree().get_nodes_in_group("ai_player"):
-		if ai == self:
-			continue
-		if ai.get("team") != team:
-			continue
-		if ai.get("role") == "goalkeeper":
+		if ai == self or ai.get("team") != team or ai.get("role") == "goalkeeper":
 			continue
 		if ai.global_position.distance_squared_to(_ball.global_position) < my_d2 - 0.25:
 			return false
@@ -185,6 +229,18 @@ func _is_primary_chaser() -> bool:
 	return true
 
 
+# Velocidade de movimento baseada na situação tática
+func _get_movement_speed() -> float:
+	if _has_ball() or not _ball:
+		return SPEED
+	var carrier: Node3D = _ball.get_carrier()
+	if carrier != null and _is_opponent(carrier):
+		var rank := _chase_rank()
+		if rank <= 1:
+			return SPEED * 1.15
+	return SPEED
+
+
 func _is_opponent(node: Node) -> bool:
 	if node.is_in_group("home_controllable"):
 		return team == "away"
@@ -194,13 +250,13 @@ func _is_opponent(node: Node) -> bool:
 	return node_team != team
 
 
-func _apply_movement(dir: Vector3, delta: float) -> void:
+func _apply_movement(dir: Vector3, speed: float, delta: float) -> void:
 	if dir.length_squared() > 0.01:
 		_facing_angle = atan2(dir.x, dir.z)
 		if _visual:
 			_visual.rotation.y = lerp_angle(_visual.rotation.y, _facing_angle, TURN_SPEED * delta)
-	velocity.x = dir.x * SPEED
-	velocity.z = dir.z * SPEED
+	velocity.x = dir.x * speed
+	velocity.z = dir.z * speed
 	if not is_on_floor():
 		velocity.y -= GRAVITY * delta
 	move_and_slide()
@@ -216,19 +272,33 @@ func on_ball_stolen() -> void:
 	_recapture_timer = STEAL_VICTIM_CD
 
 
-func _try_tackle() -> void:
+func _try_tackle() -> bool:
 	if not _ball or _has_ball() or _recapture_timer > 0.0:
-		return
+		return false
 	if not _ball.is_carried():
-		return
+		return false
 	var carrier := _ball.get_carrier() as Node
 	if not carrier or not _is_opponent(carrier):
-		return
+		return false
 	if global_position.distance_to(carrier.global_position) > STEAL_RANGE:
-		return
+		return false
+	# Bloqueia roubo pelas costas: o ladrão precisa estar na frente ou ao lado do portador
+	var carrier_body := carrier as CharacterBody3D
+	if carrier_body:
+		var carrier_vel := carrier_body.velocity
+		carrier_vel.y = 0.0
+		if carrier_vel.length_squared() > 1.0:
+			var carrier_fwd := carrier_vel.normalized()
+			var carrier_to_thief := global_position - carrier_body.global_position
+			carrier_to_thief.y = 0.0
+			if carrier_to_thief.length_squared() > 0.01:
+				# dot < -0.4 significa ladrão está diretamente atrás do portador
+				if carrier_fwd.dot(carrier_to_thief.normalized()) < -0.4:
+					return false
 	if _ball.steal_by(self):
 		if _visual and _visual.has_method("play_kick"):
 			_visual.play_kick()
+	return true
 
 
 func _update_possession() -> void:
@@ -275,3 +345,4 @@ func reset_to_home() -> void:
 	velocity = Vector3.ZERO
 	global_position = home_pos
 	_recapture_timer = 0.0
+	_tackle_timer = 0.0
