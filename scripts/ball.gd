@@ -13,9 +13,15 @@ func is_carried() -> bool:
 	return _carrier != null
 
 
-## Attaches the ball to a carrier (player). The ball stops being driven by
-## physics and is positioned manually by the carrier each frame.
+## Returns the current carrier, or null if the ball is loose.
+func get_carrier() -> Node3D:
+	return _carrier
+
+
+## Attaches the ball to a carrier (player). Ignored if already carried.
 func attach_to(carrier: Node3D) -> void:
+	if _carrier != null:
+		return
 	_carrier = carrier
 	freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
 	freeze = true

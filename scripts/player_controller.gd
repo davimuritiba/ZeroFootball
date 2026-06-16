@@ -14,6 +14,8 @@ const RECAPTURE_DELAY    := 0.4   # seconds before the ball can be regrabbed
 const KICK_FORCE        := 16.0
 const KICK_STRONG_FORCE := 26.0
 
+var team: String = "home"
+
 var _ball: RigidBody3D = null
 var _facing_angle: float = 0.0
 var _recapture_timer: float = 0.0
@@ -67,7 +69,7 @@ func _forward() -> Vector3:
 
 
 func _has_ball() -> bool:
-	return _ball != null and _ball.has_method("is_carried") and _ball.is_carried()
+	return _ball != null and _ball.has_method("get_carrier") and _ball.get_carrier() == self
 
 
 func _update_possession() -> void:
@@ -83,6 +85,8 @@ func _update_possession() -> void:
 
 	# Try to capture a loose ball
 	if _recapture_timer > 0.0:
+		return
+	if _ball.is_carried():
 		return
 	var flat_dist := Vector2(
 		_ball.global_position.x - global_position.x,

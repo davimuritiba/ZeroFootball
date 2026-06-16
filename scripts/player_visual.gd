@@ -15,6 +15,15 @@ func _ready() -> void:
 	_build()
 
 
+func configure(p_jersey: Color, p_shorts: Color) -> void:
+	jersey_color = p_jersey
+	shorts_color = p_shorts
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
+	_build()
+
+
 func set_facing(angle_y: float) -> void:
 	rotation.y = angle_y
 

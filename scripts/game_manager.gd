@@ -61,6 +61,10 @@ func _reset_positions() -> void:
 		_player.velocity = Vector3.ZERO
 		_player.global_position = PLAYER_START
 
+	for ai in get_tree().get_nodes_in_group("ai_player"):
+		if ai.has_method("reset_to_home"):
+			ai.reset_to_home()
+
 	_goal_cooldown = false
 
 
